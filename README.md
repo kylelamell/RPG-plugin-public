@@ -20,6 +20,8 @@ Language support for IBM i RPG / ILE RPG in IntelliJ-based IDEs. Mostly here for
 The packaged plugin lands in `build/distributions/` as a `.zip`. Install it via
 **Settings → Plugins → ⚙ → Install Plugin from Disk…** in your IDE.
 
+Or just use the included `rpg-plugin-0.1.0.zip` file.
+
 ## Requirements
 
 **To build:**
