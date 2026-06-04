@@ -1,0 +1,1 @@
+Just useful for syntax highlighting. First vibe-coded project so be nice :)
