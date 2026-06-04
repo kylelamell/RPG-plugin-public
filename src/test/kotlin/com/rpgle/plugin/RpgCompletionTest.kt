@@ -61,31 +61,44 @@ class RpgCompletionTest : BasePlatformTestCase() {
         assertTrue("expected CUSTHIST, got $items", items.contains("CUSTHIST"))
     }
 
-    fun testCopyPrototypeCompletion() {
+    /**
+     * Completion is single-file: a procedure declared only in another file (even one pulled in via
+     * `/COPY`) must never be offered, while local procedures sharing the lookup prefix are.
+     */
+    fun testCompletionDoesNotLeakSymbolsFromAnotherFile() {
         myFixture.addFileToProject(
-            "protos.rpgleinc",
+            "other.rpgle",
             """
-            dcl-pr getCustomer char(50);
-              id int(10) const;
-            end-pr;
-            dcl-pr getCustomerName char(50);
-              id int(10) const;
-            end-pr;
+            **free
+            dcl-proc sharedProcOther;
+              return 1;
+            end-proc;
             """.trimIndent()
         )
         myFixture.configureByText(
-            "main.rpgle",
+            "a.rpgle",
             """
             **free
-            /copy protos
+            /copy other
+            dcl-proc sharedProcLocalA;
+              return 1;
+            end-proc;
+            dcl-proc sharedProcLocalB;
+              return 2;
+            end-proc;
             dcl-proc run;
-              dsply getCust<caret>;
+              dsply %char(shared<caret>);
             end-proc;
             """.trimIndent()
         )
         myFixture.completeBasic()
         val items = myFixture.lookupElementStrings
         assertNotNull(items)
-        assertTrue("expected getCustomer from /COPY, got $items", items!!.contains("getCustomer"))
+        assertTrue("expected local sharedProcLocalA, got $items", items!!.contains("sharedProcLocalA"))
+        assertTrue("expected local sharedProcLocalB, got $items", items.contains("sharedProcLocalB"))
+        assertFalse(
+            "sharedProcOther is declared in other.rpgle, not here; got $items",
+            items.contains("sharedProcOther"),
+        )
     }
 }

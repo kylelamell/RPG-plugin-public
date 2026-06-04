@@ -6,16 +6,14 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiManager
 import com.rpgle.plugin.RpgLanguage
 import com.rpgle.plugin.psi.RpgTokenTypes
-import com.rpgle.plugin.scan.RpgIncludeResolver
 import com.rpgle.plugin.scan.RpgSymbol
 import com.rpgle.plugin.scan.RpgSymbolScanner
 
 /**
- * Hover / quick documentation for RPG symbols declared in the file or reached via `/COPY`,
- * showing a variable's type, a constant's value, or a procedure's parameters and return type.
+ * Hover / quick documentation for RPG symbols declared in the file, showing a variable's type,
+ * a constant's value, or a procedure's parameters and return type.
  */
 class RpgDocumentationProvider : AbstractDocumentationProvider() {
 
@@ -47,30 +45,16 @@ class RpgDocumentationProvider : AbstractDocumentationProvider() {
     private fun isIdentifier(element: PsiElement?): Boolean =
         element?.node?.elementType == RpgTokenTypes.IDENTIFIER
 
-    /** Resolves the identifier under [element] to a symbol, local first then /COPY. */
+    /** Resolves the identifier under [element] to a symbol declared in its file. */
     private fun resolve(element: PsiElement): RpgSymbol? {
         val file = element.containingFile ?: return null
         return findSymbol(file, element.text)
     }
 
-    private fun findSymbol(file: PsiFile, name: String): RpgSymbol? {
-        val scan = RpgSymbolScanner.scan(file)
-        val matches = ArrayList<RpgSymbol>()
-        scan.symbols.filterTo(matches) { it.name.equals(name, ignoreCase = true) }
-
-        val psiManager = PsiManager.getInstance(file.project)
-        val visited = HashSet<String>()
-        for (include in scan.includes) {
-            for (virtualFile in RpgIncludeResolver.resolve(include, file)) {
-                if (!visited.add(virtualFile.url)) continue
-                val includedPsi = psiManager.findFile(virtualFile) ?: continue
-                RpgSymbolScanner.scan(includedPsi).symbols
-                    .filterTo(matches) { it.name.equals(name, ignoreCase = true) }
-            }
-        }
-
-        return matches.maxByOrNull(::detailScore)
-    }
+    private fun findSymbol(file: PsiFile, name: String): RpgSymbol? =
+        RpgSymbolScanner.scan(file).symbols
+            .filter { it.name.equals(name, ignoreCase = true) }
+            .maxByOrNull(::detailScore)
 
     private fun detailScore(symbol: RpgSymbol): Int {
         var score = 0

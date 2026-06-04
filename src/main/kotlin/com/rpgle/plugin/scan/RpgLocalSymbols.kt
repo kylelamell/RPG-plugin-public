@@ -1,6 +1,8 @@
 package com.rpgle.plugin.scan
 
+import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiFile
+import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 
@@ -13,14 +15,21 @@ object RpgLocalSymbols {
 
     private data class Names(val procedures: Set<String>, val declared: Set<String>)
 
+    private val NAMES_KEY: Key<CachedValue<Names>> = Key.create("rpg.local.symbols")
+
     /** UPPERCASE procedure / prototype names declared in [file]. */
     fun procedureNames(file: PsiFile): Set<String> = namesFor(file).procedures
 
     /** UPPERCASE names of every symbol declared in [file]. */
     fun declaredNames(file: PsiFile): Set<String> = namesFor(file).declared
 
+    /** Drops the cached name sets for [file]; the next lookup recomputes them. */
+    fun dropCache(file: PsiFile) {
+        file.putUserData(NAMES_KEY, null)
+    }
+
     private fun namesFor(file: PsiFile): Names =
-        CachedValuesManager.getCachedValue(file) {
+        CachedValuesManager.getCachedValue(file, NAMES_KEY) {
             CachedValueProvider.Result.create(compute(file), file)
         }
 

@@ -10,8 +10,7 @@
                 <code>.rpgcpy</code> and <code>.rpgleinc</code> (free and fixed format, best effort).</li>
             <li>SQL keyword and host-variable highlighting inside <code>EXEC SQL</code> blocks.</li>
             <li>Autocomplete for built-in functions (BIFs), opcodes/keywords, procedures, subprocedures and
-                subroutines declared in the file, prototypes pulled in via <code>/COPY</code> or
-                <code>/INCLUDE</code>, and files declared with <code>DCL-F</code>.</li>
+                subroutines declared in the file, and files declared with <code>DCL-F</code>.</li>
             <li>A sticky column-position ruler across the top of RPG editors (the columns matter in fixed
                 format).</li>
             <li>Keyword highlighting for DDS physical/logical file source (<code>.pf</code>, <code>.lf</code>)
@@ -108,4 +107,12 @@
             language="RPGDDS"
             implementationClass="com.rpgle.plugin.dds.DdsSyntaxHighlighterFactory"/>
     </extensions>
+
+    <!-- Evict a file's cached symbol scan when its editor tab is closed (not when
+         merely navigating to another tab). -->
+    <projectListeners>
+        <listener
+            class="com.rpgle.plugin.scan.RpgFileCacheCleaner"
+            topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
+    </projectListeners>
 </idea-plugin>

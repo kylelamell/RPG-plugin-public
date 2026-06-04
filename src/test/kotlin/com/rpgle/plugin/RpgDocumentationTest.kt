@@ -7,7 +7,7 @@ import com.rpgle.plugin.scan.RpgSymbolScanner
 
 /**
  * Covers the symbol detail recovered for hover documentation and the end-to-end documentation
- * provider, including resolution across /COPY.
+ * provider. Resolution is confined to the current file.
  */
 class RpgDocumentationTest : BasePlatformTestCase() {
 
@@ -131,29 +131,29 @@ class RpgDocumentationTest : BasePlatformTestCase() {
         assertTrue("expected the type, got: $doc", doc.contains("packed(11:2)"))
     }
 
-    fun testDocResolvesProcedureFromCopy() {
+    /**
+     * Documentation is single-file: hovering an identifier declared only in another file (even one
+     * reachable via `/COPY`) must resolve to nothing.
+     */
+    fun testDocumentationDoesNotResolveSymbolFromAnotherFile() {
         myFixture.addFileToProject(
-            "protos.rpgleinc",
+            "other.rpgle",
             """
-            dcl-pr getCustomer char(50);
-              id int(10) const;
-            end-pr;
+            **free
+            dcl-s amountFromOther packed(11:2);
             """.trimIndent()
         )
         myFixture.configureByText(
-            "main.rpgle",
+            "a.rpgle",
             """
             **free
-            /copy protos
+            /copy other
             dcl-proc run;
-              dsply getCust<caret>omer(1);
+              amountFrom<caret>Other = 1;
             end-proc;
             """.trimIndent()
         )
-        val doc = generateDocAtCaret()
-        assertNotNull("expected documentation resolved through /COPY", doc)
-        assertTrue("expected return type, got: $doc", doc!!.contains("char(50)"))
-        assertTrue("expected parameter name, got: $doc", doc.contains("id"))
+        assertNull("documentation must not bleed across files", generateDocAtCaret())
     }
 
     private fun generateDocAtCaret(): String? {

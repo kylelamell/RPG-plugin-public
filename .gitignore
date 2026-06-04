@@ -39,6 +39,3 @@ bin/
 
 ### Mac OS ###
 .DS_Store
-
-### Claude Code (local tooling config — never commit, per maintainer preference) ###
-.claude/

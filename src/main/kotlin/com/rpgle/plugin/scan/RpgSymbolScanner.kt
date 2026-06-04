@@ -1,17 +1,19 @@
 package com.rpgle.plugin.scan
 
 import com.intellij.lang.ASTNode
+import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiFile
 import com.intellij.psi.TokenType
+import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.rpgle.plugin.data.RpgWords
 import com.rpgle.plugin.psi.RpgTokenTypes
 
 /**
- * Extracts declared symbols and /COPY targets from a free-format RPG file by walking
- * the flat token stream, recovering each symbol's detail for hover documentation.
- * Results are cached per file and invalidated on any PSI change.
+ * Extracts declared symbols from a free-format RPG file by walking the flat token stream,
+ * recovering each symbol's detail for hover documentation. Results are cached per file and
+ * invalidated on any PSI change.
  */
 object RpgSymbolScanner {
 
@@ -30,14 +32,20 @@ object RpgSymbolScanner {
         "END-PROC", "END-PR", "END-PI", "END-DS",
     )
 
+    private val SCAN_KEY: Key<CachedValue<RpgScanResult>> = Key.create("rpg.symbol.scan")
+
     fun scan(file: PsiFile): RpgScanResult =
-        CachedValuesManager.getCachedValue(file) {
+        CachedValuesManager.getCachedValue(file, SCAN_KEY) {
             CachedValueProvider.Result.create(doScan(file), file)
         }
 
+    /** Drops the cached scan for [file]; the next [scan] recomputes it lazily. */
+    fun dropCache(file: PsiFile) {
+        file.putUserData(SCAN_KEY, null)
+    }
+
     private fun doScan(file: PsiFile): RpgScanResult {
         val symbols = ArrayList<RpgSymbol>()
-        val includes = ArrayList<String>()
         val text = file.text
 
         val nodes = file.node.getChildren(null).filter {
@@ -46,29 +54,15 @@ object RpgSymbolScanner {
 
         for (i in nodes.indices) {
             val node = nodes[i]
-            when (node.elementType) {
-                RpgTokenTypes.IDENTIFIER -> {
-                    val kind = KEYWORD_KIND[node.text.uppercase()] ?: continue
-                    val next = nodes.getOrNull(i + 1) ?: continue
-                    if (next.elementType != RpgTokenTypes.IDENTIFIER) continue
-                    val name = next.text
-                    if (name.uppercase() in RpgWords.DECL_KEYWORDS) continue
-                    symbols.add(buildSymbol(kind, name, nodes, i, text, file.name))
-                }
-
-                RpgTokenTypes.DIRECTIVE -> {
-                    val dir = node.text.uppercase()
-                    if (dir == "/COPY" || dir == "/INCLUDE") {
-                        val start = node.startOffset + node.textLength
-                        val nl = text.indexOf('\n', start)
-                        val end = if (nl < 0) text.length else nl
-                        val target = text.substring(start.coerceAtMost(text.length), end).trim()
-                        if (target.isNotEmpty()) includes.add(target)
-                    }
-                }
-            }
+            if (node.elementType != RpgTokenTypes.IDENTIFIER) continue
+            val kind = KEYWORD_KIND[node.text.uppercase()] ?: continue
+            val next = nodes.getOrNull(i + 1) ?: continue
+            if (next.elementType != RpgTokenTypes.IDENTIFIER) continue
+            val name = next.text
+            if (name.uppercase() in RpgWords.DECL_KEYWORDS) continue
+            symbols.add(buildSymbol(kind, name, nodes, i, text, file.name))
         }
-        return RpgScanResult(symbols, includes)
+        return RpgScanResult(symbols)
     }
 
     /** Builds a symbol for the declaration whose keyword is at [keywordIndex] and whose name is the following token. */

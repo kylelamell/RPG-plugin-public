@@ -22,8 +22,7 @@ data class RpgSymbol(
 /** A single procedure / prototype parameter: its name and declared type. */
 data class RpgParameter(val name: String, val type: String?)
 
-/** Result of scanning one RPG file: declared symbols plus raw /COPY targets. */
+/** Result of scanning one RPG file: the symbols it declares. */
 data class RpgScanResult(
     val symbols: List<RpgSymbol>,
-    val includes: List<String>,
 )
