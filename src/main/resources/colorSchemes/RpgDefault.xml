@@ -1,0 +1,32 @@
+<scheme name="Default" version="142" parent_scheme="Default">
+    <!--
+      Default colors for RPG attribute keys that need an explicit,
+      theme-independent color (not a fallback to an existing semantic role).
+      Registered via the `additionalTextAttributes` extension point in
+      plugin.xml. Defining defaults here is the non-deprecated replacement for
+      passing a literal TextAttributes to createTextAttributesKey().
+
+      This one file is registered for every bundled IntelliJ editor color scheme
+      in plugin.xml (additionalTextAttributes does NOT cascade via parent_scheme,
+      so each scheme is listed explicitly). The <scheme name> below is just the
+      container the loader reads <attributes> from; binding to a scheme is done by
+      the `scheme=` attribute on each plugin.xml entry, not by this name. Colors
+      stay user-customizable via Settings > Editor > Color Scheme > RPG.
+    -->
+    <attributes>
+        <!-- Embedded SQL keywords: teal, so SQL stands out from RPG opcodes. -->
+        <option name="RPG_SQL_KEYWORD">
+            <value>
+                <option name="FOREGROUND" value="2aa198"/>
+            </value>
+        </option>
+        <!-- Cursor definition / lifecycle keywords: a darker blue, related to
+             the SQL teal but distinct, so cursor work reads as "SQL, but
+             cursor". -->
+        <option name="RPG_SQL_CURSOR_KEYWORD">
+            <value>
+                <option name="FOREGROUND" value="2a6fa1"/>
+            </value>
+        </option>
+    </attributes>
+</scheme>

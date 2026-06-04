@@ -1,0 +1,41 @@
+# Normalize line endings: store as LF in the repo, check out native.
+* text=auto
+
+# JVM / build sources
+*.kt         text
+*.kts        text
+*.java       text
+*.groovy     text
+*.gradle     text
+*.xml        text
+*.properties text
+*.iml        text
+*.md         text
+*.json       text
+*.yml        text
+*.yaml       text
+
+# RPG language sources (parser test fixtures)
+*.rpgle      text
+*.sqlrpgle   text
+*.rpg        text
+*.rpgcpy     text
+*.rpgleinc   text
+*.clle       text
+
+# Scripts: force endings regardless of platform
+*.sh         text eol=lf
+gradlew      text eol=lf
+*.bat        text eol=crlf
+*.cmd        text eol=crlf
+
+# Binary: never normalize
+*.jar        binary
+*.war        binary
+*.png        binary
+*.jpg        binary
+*.jpeg       binary
+*.gif        binary
+*.ico        binary
+*.zip        binary
+*.gz         binary

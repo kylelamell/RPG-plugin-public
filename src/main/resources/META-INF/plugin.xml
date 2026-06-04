@@ -1,0 +1,111 @@
+<idea-plugin>
+    <id>com.rpgle.plugin</id>
+    <name>IBM RPG (RPGLE)</name>
+    <vendor>RPG Plugin</vendor>
+
+    <description><![CDATA[
+        Language support for IBM i RPG / ILE RPG.
+        <ul>
+            <li>Syntax highlighting for <code>.rpgle</code>, <code>.sqlrpgle</code>, <code>.rpg</code>,
+                <code>.rpgcpy</code> and <code>.rpgleinc</code> (free and fixed format, best effort).</li>
+            <li>SQL keyword and host-variable highlighting inside <code>EXEC SQL</code> blocks.</li>
+            <li>Autocomplete for built-in functions (BIFs), opcodes/keywords, procedures, subprocedures and
+                subroutines declared in the file, prototypes pulled in via <code>/COPY</code> or
+                <code>/INCLUDE</code>, and files declared with <code>DCL-F</code>.</li>
+            <li>A sticky column-position ruler across the top of RPG editors (the columns matter in fixed
+                format).</li>
+            <li>Keyword highlighting for DDS physical/logical file source (<code>.pf</code>, <code>.lf</code>)
+                and for service program binder/export source (<code>.bnd</code>).</li>
+        </ul>
+    ]]></description>
+
+    <depends>com.intellij.modules.lang</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <!-- RPG language -->
+        <fileType
+            name="RPG"
+            language="RPG"
+            implementationClass="com.rpgle.plugin.RpgFileType"
+            fieldName="INSTANCE"
+            extensions="rpgle;sqlrpgle;rpg;rpgcpy;rpgleinc"/>
+        <lang.parserDefinition
+            language="RPG"
+            implementationClass="com.rpgle.plugin.parser.RpgParserDefinition"/>
+        <lang.syntaxHighlighterFactory
+            language="RPG"
+            implementationClass="com.rpgle.plugin.highlight.RpgSyntaxHighlighterFactory"/>
+        <annotator
+            language="RPG"
+            implementationClass="com.rpgle.plugin.highlight.RpgAnnotator"/>
+        <completion.contributor
+            language="RPG"
+            implementationClass="com.rpgle.plugin.completion.RpgCompletionContributor"/>
+        <lang.documentationProvider
+            language="RPG"
+            implementationClass="com.rpgle.plugin.documentation.RpgDocumentationProvider"/>
+        <lang.commenter
+            language="RPG"
+            implementationClass="com.rpgle.plugin.lang.RpgCommenter"/>
+        <lang.braceMatcher
+            language="RPG"
+            implementationClass="com.rpgle.plugin.lang.RpgBraceMatcher"/>
+        <colorSettingsPage
+            implementation="com.rpgle.plugin.highlight.RpgColorSettingsPage"/>
+        <!-- Explicit default colors for RPG keys that need a guaranteed-distinct
+             color rather than a theme fallback (embedded SQL + cursor keywords).
+             The colors live in colorSchemes/RpgDefault.xml.
+
+             additionalTextAttributes injects into ONE named editor color scheme
+             each; it does NOT cascade down the parent_scheme chain, so every
+             bundled IntelliJ scheme must be listed explicitly or the color is
+             absent there. Bundled scheme hierarchy (IC-2024.3):
+               Default (light root)
+                 |- Darcula -> Dark, Darcula Contrast
+                 |- IntelliJ Light
+                 |- Light
+               High contrast (separate root)
+             All entries point at the same file for now (one theme-agnostic
+             color). To give a theme its own color later, point that scheme's
+             entry at a dedicated file with different FOREGROUND values. -->
+        <additionalTextAttributes scheme="Default"          file="colorSchemes/RpgDefault.xml"/>
+        <additionalTextAttributes scheme="Darcula"          file="colorSchemes/RpgDefault.xml"/>
+        <additionalTextAttributes scheme="Dark"             file="colorSchemes/RpgDefault.xml"/>
+        <additionalTextAttributes scheme="Darcula Contrast" file="colorSchemes/RpgDefault.xml"/>
+        <additionalTextAttributes scheme="IntelliJ Light"   file="colorSchemes/RpgDefault.xml"/>
+        <additionalTextAttributes scheme="Light"            file="colorSchemes/RpgDefault.xml"/>
+        <additionalTextAttributes scheme="High contrast"    file="colorSchemes/RpgDefault.xml"/>
+
+        <!-- Sticky column-position ruler shown at the top of RPG editors. -->
+        <editorFactoryListener
+            implementation="com.rpgle.plugin.ruler.RpgRulerEditorListener"/>
+
+        <!-- Service program binder / export source (optional) -->
+        <fileType
+            name="RPG Binder Source"
+            language="RPGBinder"
+            implementationClass="com.rpgle.plugin.binder.BinderFileType"
+            fieldName="INSTANCE"
+            extensions="bnd"/>
+        <lang.parserDefinition
+            language="RPGBinder"
+            implementationClass="com.rpgle.plugin.binder.BinderParserDefinition"/>
+        <lang.syntaxHighlighterFactory
+            language="RPGBinder"
+            implementationClass="com.rpgle.plugin.binder.BinderSyntaxHighlighterFactory"/>
+
+        <!-- DDS database source: physical (.pf) and logical (.lf) files -->
+        <fileType
+            name="RPG DDS"
+            language="RPGDDS"
+            implementationClass="com.rpgle.plugin.dds.DdsFileType"
+            fieldName="INSTANCE"
+            extensions="pf;lf"/>
+        <lang.parserDefinition
+            language="RPGDDS"
+            implementationClass="com.rpgle.plugin.dds.DdsParserDefinition"/>
+        <lang.syntaxHighlighterFactory
+            language="RPGDDS"
+            implementationClass="com.rpgle.plugin.dds.DdsSyntaxHighlighterFactory"/>
+    </extensions>
+</idea-plugin>
