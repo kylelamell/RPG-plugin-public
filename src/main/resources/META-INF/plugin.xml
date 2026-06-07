@@ -51,22 +51,7 @@
             implementationClass="com.rpgle.plugin.lang.RpgBraceMatcher"/>
         <colorSettingsPage
             implementation="com.rpgle.plugin.highlight.RpgColorSettingsPage"/>
-        <!-- Explicit default colors for RPG keys that need a guaranteed-distinct
-             color rather than a theme fallback (embedded SQL + cursor keywords).
-             The colors live in colorSchemes/RpgDefault.xml.
 
-             additionalTextAttributes injects into ONE named editor color scheme
-             each; it does NOT cascade down the parent_scheme chain, so every
-             bundled IntelliJ scheme must be listed explicitly or the color is
-             absent there. Bundled scheme hierarchy (IC-2024.3):
-               Default (light root)
-                 |- Darcula -> Dark, Darcula Contrast
-                 |- IntelliJ Light
-                 |- Light
-               High contrast (separate root)
-             All entries point at the same file for now (one theme-agnostic
-             color). To give a theme its own color later, point that scheme's
-             entry at a dedicated file with different FOREGROUND values. -->
         <additionalTextAttributes scheme="Default"          file="colorSchemes/RpgDefault.xml"/>
         <additionalTextAttributes scheme="Darcula"          file="colorSchemes/RpgDefault.xml"/>
         <additionalTextAttributes scheme="Dark"             file="colorSchemes/RpgDefault.xml"/>
