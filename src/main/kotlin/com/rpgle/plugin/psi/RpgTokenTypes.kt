@@ -1,11 +1,9 @@
 package com.rpgle.plugin.psi
 
-import com.intellij.psi.tree.IElementType
 import com.rpgle.plugin.RpgLanguage
+import com.rpgle.plugin.common.FlatTokenType
 
-class RpgTokenType(debugName: String) : IElementType(debugName, RpgLanguage) {
-    override fun toString(): String = "RpgTokenType." + super.toString()
-}
+class RpgTokenType(debugName: String) : FlatTokenType(debugName, RpgLanguage)
 
 /**
  * Token types emitted by the JFlex lexer. Declared with [JvmField] so the
