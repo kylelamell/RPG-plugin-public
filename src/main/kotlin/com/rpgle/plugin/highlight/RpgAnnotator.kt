@@ -10,6 +10,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.rpgle.plugin.data.RpgWords
 import com.rpgle.plugin.psi.RpgTokenTypes
 import com.rpgle.plugin.scan.RpgLocalSymbols
+import com.rpgle.plugin.scan.RpgSqlPresence
 
 /**
  * Semantic coloring the lexer-based highlighter can't do: it needs word lookups
@@ -20,6 +21,7 @@ class RpgAnnotator : Annotator {
     override fun annotate(element: PsiElement, holder: AnnotationHolder) {
         if (element.node?.elementType != RpgTokenTypes.IDENTIFIER) return
         val upper = element.text.uppercase()
+        val file = element.containingFile ?: return
 
         val keywordKey = when (upper) {
             in RpgWords.OPCODES -> RpgSyntaxHighlighter.OPCODE

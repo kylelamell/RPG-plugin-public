@@ -19,5 +19,6 @@ class RpgFileCacheCleaner : FileEditorManagerListener {
         val psi = PsiManager.getInstance(project).findFile(file) ?: return
         RpgSymbolScanner.dropCache(psi)
         RpgLocalSymbols.dropCache(psi)
+        RpgSqlPresence.dropCache(psi)
     }
 }
