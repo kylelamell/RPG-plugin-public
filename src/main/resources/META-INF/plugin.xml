@@ -23,35 +23,50 @@
     <extensions defaultExtensionNs="com.intellij">
         <!-- RPG language -->
         <fileType
-            name="RPG"
-            language="RPG"
-            implementationClass="com.rpgle.plugin.RpgFileType"
-            fieldName="INSTANCE"
-            extensions="rpgle;sqlrpgle;rpg;rpgcpy;rpgleinc"/>
+                name="RPG"
+                language="RPG"
+                implementationClass="com.rpgle.plugin.RpgFileType"
+                fieldName="INSTANCE"
+                extensions="rpgle;sqlrpgle;rpg;rpgcpy;rpgleinc"/>
         <lang.parserDefinition
-            language="RPG"
-            implementationClass="com.rpgle.plugin.parser.RpgParserDefinition"/>
+                language="RPG"
+                implementationClass="com.rpgle.plugin.parser.RpgParserDefinition"/>
         <lang.syntaxHighlighterFactory
-            language="RPG"
-            implementationClass="com.rpgle.plugin.highlight.RpgSyntaxHighlighterFactory"/>
+                language="RPG"
+                implementationClass="com.rpgle.plugin.highlight.RpgSyntaxHighlighterFactory"/>
         <annotator
-            language="RPG"
-            implementationClass="com.rpgle.plugin.highlight.RpgAnnotator"/>
+                language="RPG"
+                implementationClass="com.rpgle.plugin.highlight.RpgAnnotator"/>
         <completion.contributor
-            language="RPG"
-            implementationClass="com.rpgle.plugin.completion.RpgCompletionContributor"/>
+                language="RPG"
+                implementationClass="com.rpgle.plugin.completion.RpgCompletionContributor"/>
         <lang.documentationProvider
-            language="RPG"
-            implementationClass="com.rpgle.plugin.documentation.RpgDocumentationProvider"/>
+                language="RPG"
+                implementationClass="com.rpgle.plugin.documentation.RpgDocumentationProvider"/>
         <lang.commenter
-            language="RPG"
-            implementationClass="com.rpgle.plugin.lang.RpgCommenter"/>
+                language="RPG"
+                implementationClass="com.rpgle.plugin.lang.RpgCommenter"/>
         <lang.braceMatcher
-            language="RPG"
-            implementationClass="com.rpgle.plugin.lang.RpgBraceMatcher"/>
+                language="RPG"
+                implementationClass="com.rpgle.plugin.lang.RpgBraceMatcher"/>
         <colorSettingsPage
-            implementation="com.rpgle.plugin.highlight.RpgColorSettingsPage"/>
+                implementation="com.rpgle.plugin.highlight.RpgColorSettingsPage"/>
+        <!-- Explicit default colors for RPG keys that need a guaranteed-distinct
+             color rather than a theme fallback (embedded SQL + cursor keywords).
+             The colors live in colorSchemes/RpgDefault.xml.
 
+             additionalTextAttributes injects into ONE named editor color scheme
+             each; it does NOT cascade down the parent_scheme chain, so every
+             bundled IntelliJ scheme must be listed explicitly or the color is
+             absent there. Bundled scheme hierarchy (IC-2024.3):
+               Default (light root)
+                 |- Darcula -> Dark, Darcula Contrast
+                 |- IntelliJ Light
+                 |- Light
+               High contrast (separate root)
+             All entries point at the same file for now (one theme-agnostic
+             color). To give a theme its own color later, point that scheme's
+             entry at a dedicated file with different FOREGROUND values. -->
         <additionalTextAttributes scheme="Default"          file="colorSchemes/RpgDefault.xml"/>
         <additionalTextAttributes scheme="Darcula"          file="colorSchemes/RpgDefault.xml"/>
         <additionalTextAttributes scheme="Dark"             file="colorSchemes/RpgDefault.xml"/>
@@ -62,42 +77,42 @@
 
         <!-- Sticky column-position ruler shown at the top of RPG editors. -->
         <editorFactoryListener
-            implementation="com.rpgle.plugin.ruler.RpgRulerEditorListener"/>
+                implementation="com.rpgle.plugin.ruler.RpgRulerEditorListener"/>
 
         <!-- Service program binder / export source (optional) -->
         <fileType
-            name="RPG Binder Source"
-            language="RPGBinder"
-            implementationClass="com.rpgle.plugin.binder.BinderFileType"
-            fieldName="INSTANCE"
-            extensions="bnd"/>
+                name="RPG Binder Source"
+                language="RPGBinder"
+                implementationClass="com.rpgle.plugin.binder.BinderFileType"
+                fieldName="INSTANCE"
+                extensions="bnd"/>
         <lang.parserDefinition
-            language="RPGBinder"
-            implementationClass="com.rpgle.plugin.binder.BinderParserDefinition"/>
+                language="RPGBinder"
+                implementationClass="com.rpgle.plugin.binder.BinderParserDefinition"/>
         <lang.syntaxHighlighterFactory
-            language="RPGBinder"
-            implementationClass="com.rpgle.plugin.binder.BinderSyntaxHighlighterFactory"/>
+                language="RPGBinder"
+                implementationClass="com.rpgle.plugin.binder.BinderSyntaxHighlighterFactory"/>
 
         <!-- DDS database source: physical (.pf) and logical (.lf) files -->
         <fileType
-            name="RPG DDS"
-            language="RPGDDS"
-            implementationClass="com.rpgle.plugin.dds.DdsFileType"
-            fieldName="INSTANCE"
-            extensions="pf;lf"/>
+                name="RPG DDS"
+                language="RPGDDS"
+                implementationClass="com.rpgle.plugin.dds.DdsFileType"
+                fieldName="INSTANCE"
+                extensions="pf;lf"/>
         <lang.parserDefinition
-            language="RPGDDS"
-            implementationClass="com.rpgle.plugin.dds.DdsParserDefinition"/>
+                language="RPGDDS"
+                implementationClass="com.rpgle.plugin.dds.DdsParserDefinition"/>
         <lang.syntaxHighlighterFactory
-            language="RPGDDS"
-            implementationClass="com.rpgle.plugin.dds.DdsSyntaxHighlighterFactory"/>
+                language="RPGDDS"
+                implementationClass="com.rpgle.plugin.dds.DdsSyntaxHighlighterFactory"/>
     </extensions>
 
     <!-- Evict a file's cached symbol scan when its editor tab is closed (not when
          merely navigating to another tab). -->
     <projectListeners>
         <listener
-            class="com.rpgle.plugin.scan.RpgFileCacheCleaner"
-            topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
+                class="com.rpgle.plugin.scan.RpgFileCacheCleaner"
+                topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
     </projectListeners>
 </idea-plugin>

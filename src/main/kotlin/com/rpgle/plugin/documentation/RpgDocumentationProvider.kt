@@ -12,8 +12,16 @@ import com.rpgle.plugin.scan.RpgSymbol
 import com.rpgle.plugin.scan.RpgSymbolScanner
 
 /**
- * Hover / quick documentation for RPG symbols declared in the file, showing a variable's type,
- * a constant's value, or a procedure's parameters and return type.
+ * Hover / quick documentation for RPG symbols declared in the file:
+ *  - **variables** show their declared type,
+ *  - **constants** show their value,
+ *  - **procedures / prototypes** show their parameters (name + type) and return
+ *    type.
+ *
+ * The PSI is flat (every token is a leaf), so there are no references to resolve.
+ * [getCustomDocumentationElement] hands the platform the identifier leaf under the
+ * caret as the documentation target whenever it names a known symbol, and
+ * [generateDoc] looks that name up in the symbol scan.
  */
 class RpgDocumentationProvider : AbstractDocumentationProvider() {
 
@@ -54,6 +62,8 @@ class RpgDocumentationProvider : AbstractDocumentationProvider() {
     private fun findSymbol(file: PsiFile, name: String): RpgSymbol? =
         RpgSymbolScanner.scan(file).symbols
             .filter { it.name.equals(name, ignoreCase = true) }
+            // Prefer the match carrying the most documentation detail (e.g. the
+            // implementation's DCL-PI over a bare name, or a typed declaration).
             .maxByOrNull(::detailScore)
 
     private fun detailScore(symbol: RpgSymbol): Int {
@@ -63,6 +73,8 @@ class RpgDocumentationProvider : AbstractDocumentationProvider() {
         if (symbol.value != null) score += 1
         return score
     }
+
+    // --- Rendering -----------------------------------------------------------
 
     private fun render(symbol: RpgSymbol): String {
         val sb = StringBuilder()
@@ -83,7 +95,7 @@ class RpgDocumentationProvider : AbstractDocumentationProvider() {
                 if (!params.isNullOrEmpty()) {
                     section(sections, "Parameters", params.joinToString("<br/>") { param ->
                         code(esc(param.name)) +
-                            (param.type?.let { " " + grayed(esc(it)) } ?: "")
+                                (param.type?.let { " " + grayed(esc(it)) } ?: "")
                     })
                 } else if (params != null) {
                     section(sections, "Parameters", grayed("none"))

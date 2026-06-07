@@ -11,9 +11,12 @@ import com.rpgle.plugin.data.RpgWords
 import com.rpgle.plugin.psi.RpgTokenTypes
 
 /**
- * Extracts declared symbols from a free-format RPG file by walking the flat token stream,
- * recovering each symbol's detail for hover documentation. Results are cached per file and
- * invalidated on any PSI change.
+ * Extracts declared symbols from a free-format RPG file by walking the flat token
+ * stream. Besides each symbol's name and kind it also recovers the detail used
+ * for hover documentation: a variable's type, a constant's value, and a procedure
+ * / prototype's parameters and return type. The scan is confined to the file
+ * itself — it does not follow `/COPY` / `/INCLUDE` into other files. Results are
+ * cached per file and invalidated on any PSI change.
  */
 object RpgSymbolScanner {
 
@@ -27,11 +30,21 @@ object RpgSymbolScanner {
         "BEGSR" to RpgSymbol.Kind.SUBROUTINE,
     )
 
+    /**
+     * Declaration keywords that begin a new top-level item; reaching one while
+     * collecting parameter lines means the enclosing `END-PR` / `END-PI` was
+     * missing, so we stop rather than swallow the rest of the file.
+     */
     private val BLOCK_STOP: Set<String> = setOf(
         "DCL-PROC", "DCL-PR", "DCL-PI", "DCL-DS", "DCL-S", "DCL-C", "DCL-F", "BEGSR",
         "END-PROC", "END-PR", "END-PI", "END-DS",
     )
 
+    /**
+     * The cached scan is stored under an explicit key (rather than the provider's
+     * auto-derived one) so [dropCache] can evict it deterministically when the
+     * file's editor is closed.
+     */
     private val SCAN_KEY: Key<CachedValue<RpgScanResult>> = Key.create("rpg.symbol.scan")
 
     fun scan(file: PsiFile): RpgScanResult =
@@ -59,13 +72,19 @@ object RpgSymbolScanner {
             val next = nodes.getOrNull(i + 1) ?: continue
             if (next.elementType != RpgTokenTypes.IDENTIFIER) continue
             val name = next.text
+            // Guard against "dcl-pi *n" style and back-to-back keywords.
             if (name.uppercase() in RpgWords.DECL_KEYWORDS) continue
             symbols.add(buildSymbol(kind, name, nodes, i, text, file.name))
         }
         return RpgScanResult(symbols)
     }
 
-    /** Builds a symbol for the declaration whose keyword is at [keywordIndex] and whose name is the following token. */
+    /**
+     * Builds a symbol for the declaration whose keyword is at [keywordIndex] and
+     * whose name is the following token. The lookahead used to recover the detail
+     * does not consume tokens from the outer scan, so nested declarations (e.g. a
+     * procedure's locals or its parameter lines) are still visited normally.
+     */
     private fun buildSymbol(
         kind: RpgSymbol.Kind,
         name: String,
@@ -74,7 +93,7 @@ object RpgSymbolScanner {
         text: String,
         fileName: String,
     ): RpgSymbol {
-        val afterName = keywordIndex + 2
+        val afterName = keywordIndex + 2 // first token after the declared name
         return when (kind) {
             RpgSymbol.Kind.VARIABLE ->
                 RpgSymbol(name, kind, fileName, typeText = extractType(nodes, afterName, text))
@@ -99,8 +118,11 @@ object RpgSymbolScanner {
     }
 
     /**
-     * Extracts a data type starting at [from] — the type keyword plus its parenthesized
-     * arguments, verbatim — or null when [from] is not a recognized data type keyword.
+     * Extracts a data type starting at [from]: the type keyword plus its
+     * parenthesized arguments, reconstructed verbatim from the source (so
+     * `char ( 10 )` is normalized only by what the author actually typed). Returns
+     * null when [from] is not a recognized data type keyword — e.g. a trailing
+     * declaration keyword (`EXTPGM`, `INZ`, …) or the terminating `;`.
      */
     private fun extractType(nodes: List<ASTNode>, from: Int, text: String): String? {
         val first = nodes.getOrNull(from) ?: return null
@@ -134,7 +156,8 @@ object RpgSymbolScanner {
 
     /**
      * Finds a procedure's `DCL-PI ... END-PI` interface, scanning forward from the
-     * procedure name; returns null at `END-PROC` or the next `DCL-PROC`.
+     * procedure name. Stops (returning null) at `END-PROC` or the next `DCL-PROC`,
+     * so a procedure with no interface yields no parameters and no return type.
      */
     private fun findProcInterface(nodes: List<ASTNode>, from: Int, text: String): ProcInterface? {
         var j = from
@@ -154,6 +177,8 @@ object RpgSymbolScanner {
     /** Parses a `DCL-PI <name|*n> [returnType]; <params...> END-PI`. */
     private fun parseProcInterface(nodes: List<ASTNode>, piIndex: Int, text: String): ProcInterface {
         var k = piIndex + 1
+        // Skip the interface name placeholder: either `*n` (OPERATOR '*' + IDENT)
+        // or a plain identifier echoing the procedure name.
         val n0 = nodes.getOrNull(k)
         if (n0?.elementType == RpgTokenTypes.OPERATOR && n0.text == "*") {
             k += 2
@@ -186,13 +211,18 @@ object RpgSymbolScanner {
             }
             val upper = tok.text.uppercase()
             if (upper == endKeyword) break
-            if (upper in BLOCK_STOP) break
+            if (upper in BLOCK_STOP) break // missing END-PR/END-PI; bail out safely
 
+            // `DCL-PARM` is an optional, explicit prefix; the name follows it.
             val explicitParm = upper == "DCL-PARM"
             val nameIndex = if (explicitParm) j + 1 else j
             val nameNode = nodes.getOrNull(nameIndex)
             if (nameNode?.elementType != RpgTokenTypes.IDENTIFIER) break
             val type = extractType(nodes, nameIndex + 1, text)
+            // Every parameter is `name <data-type> ...`. A line whose second token
+            // is not a recognized type isn't a parameter — it's executable code
+            // following a bodyless single-statement prototype (one with no
+            // parameters and thus no END-PR). Stop before inventing fake params.
             if (type == null && !explicitParm) break
             params.add(RpgParameter(nameNode.text, type))
             j = indexOfSemicolon(nodes, nameIndex) + 1
@@ -219,7 +249,7 @@ object RpgSymbolScanner {
             }
             j++
         }
-        return nodes.size - 1
+        return nodes.size - 1 // unbalanced; treat the rest as the argument list
     }
 
     /** Index of the next `;` at or after [from], or [nodes].size when none. */

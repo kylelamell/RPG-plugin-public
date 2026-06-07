@@ -11,8 +11,10 @@ import com.intellij.openapi.util.Key
 import com.rpgle.plugin.RpgFileType
 
 /**
- * Installs the [RpgColumnRuler] as the permanent header component of every main RPG file editor,
- * so it stays pinned at the top while scrolling and survives the Find/Replace toolbar closing.
+ * Installs the [RpgColumnRuler] as the header component of every main RPG file
+ * editor. The header slot keeps the ruler pinned at the top while scrolling,
+ * and setting it as the *permanent* header means it is restored after the
+ * Find/Replace toolbar (which borrows the same slot) closes.
  */
 class RpgRulerEditorListener : EditorFactoryListener {
 
@@ -26,10 +28,14 @@ class RpgRulerEditorListener : EditorFactoryListener {
         editor.setPermanentHeaderComponent(ruler)
         editor.setHeaderComponent(ruler)
 
+        // Repaint on scroll/resize/zoom so the ruler tracks horizontal scrolling
+        // and font changes; keep the reference so it can be detached on release.
         val listener = VisibleAreaListener { ruler.repaint() }
         editor.scrollingModel.addVisibleAreaListener(listener)
         editor.putUserData(LISTENER_KEY, listener)
 
+        // Repaint on caret movement so the column-position highlight follows the
+        // cursor; keep the reference so it can be detached on release.
         val caretListener = object : CaretListener {
             override fun caretPositionChanged(event: CaretEvent) = ruler.repaint()
         }

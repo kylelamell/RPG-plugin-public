@@ -13,5 +13,7 @@ object DdsTokenTypes {
     @JvmField val IDENTIFIER = DdsTokenType("IDENTIFIER")
     @JvmField val LPAREN = DdsTokenType("LPAREN")
     @JvmField val RPAREN = DdsTokenType("RPAREN")
+
+    /** Punctuation / anything else: carried so the parser stays flat but left uncoloured. */
     @JvmField val TEXT = DdsTokenType("TEXT")
 }

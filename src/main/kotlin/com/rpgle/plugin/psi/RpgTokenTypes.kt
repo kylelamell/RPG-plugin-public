@@ -24,7 +24,10 @@ object RpgTokenTypes {
     @JvmField val DOT = RpgTokenType("DOT")
     @JvmField val OPERATOR = RpgTokenType("OPERATOR")
 
+    // Embedded SQL (inside EXEC SQL ... ; / END-EXEC blocks).
     @JvmField val SQL_KEYWORD = RpgTokenType("SQL_KEYWORD")
+    // Cursor definition / lifecycle keywords (DECLARE/CURSOR/OPEN/FETCH/CLOSE),
+    // separated from SQL_KEYWORD so they can be colored distinctly.
     @JvmField val SQL_CURSOR_KEYWORD = RpgTokenType("SQL_CURSOR_KEYWORD")
     @JvmField val SQL_HOST_VAR = RpgTokenType("SQL_HOST_VAR")
 }

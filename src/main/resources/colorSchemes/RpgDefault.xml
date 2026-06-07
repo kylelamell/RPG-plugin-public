@@ -14,11 +14,15 @@
       stay user-customizable via Settings > Editor > Color Scheme > RPG.
     -->
     <attributes>
+        <!-- Embedded SQL keywords: teal, so SQL stands out from RPG opcodes. -->
         <option name="RPG_SQL_KEYWORD">
             <value>
                 <option name="FOREGROUND" value="2aa198"/>
             </value>
         </option>
+        <!-- Cursor definition / lifecycle keywords: a darker blue, related to
+             the SQL teal but distinct, so cursor work reads as "SQL, but
+             cursor". -->
         <option name="RPG_SQL_CURSOR_KEYWORD">
             <value>
                 <option name="FOREGROUND" value="2a6fa1"/>

@@ -13,8 +13,9 @@ import com.rpgle.plugin.scan.RpgLocalSymbols
 import com.rpgle.plugin.scan.RpgSqlPresence
 
 /**
- * Semantic coloring the lexer-based highlighter can't do: it needs word lookups
- * (keywords / opcodes / data types) and a little context after a declaration keyword.
+ * Semantic colouring that the lexer-based highlighter can't do, because it
+ * requires word lookups (keywords / opcodes / data types) and a little context
+ * (the name token right after a declaration keyword).
  */
 class RpgAnnotator : Annotator {
 
@@ -23,6 +24,12 @@ class RpgAnnotator : Annotator {
         val upper = element.text.uppercase()
         val file = element.containingFile ?: return
 
+        // Inside an EXEC SQL block an identifier is a table / column / function
+        // name, not an RPG symbol or keyword — leave coloring there to the lexer's
+        // SQL tokens. Checked first (before the keyword/opcode/data-type lookup) so
+        // an SQL identifier that happens to match an RPG word — a column named
+        // DATE, TIME, READ, … — is not miscolored as an RPG keyword. The cheap
+        // hasEmbeddedSql guard keeps SQL-free files from paying for the scan.
         if (RpgSqlPresence.hasEmbeddedSql(file) && isInsideSql(element)) return
 
         val keywordKey = when (upper) {
@@ -37,11 +44,15 @@ class RpgAnnotator : Annotator {
             return
         }
 
+        // Declaration/definition context: the name token right after a
+        // declaration keyword (DCL-PROC name, DCL-F name, BEGSR/EXSR name).
         val prev = prevMeaningful(element)
         if (prev?.node?.elementType == RpgTokenTypes.IDENTIFIER) {
             val contextKey = when (prev.text.uppercase()) {
                 "DCL-PROC", "DCL-PR", "DCL-PI" -> RpgSyntaxHighlighter.PROC_NAME
                 "DCL-F" -> RpgSyntaxHighlighter.FILE_NAME
+                // Subroutine name at its declaration (BEGSR name) and at call
+                // sites (EXSR name): a plain IDENTIFIER the lexer can't classify.
                 "BEGSR", "EXSR" -> RpgSyntaxHighlighter.SUBROUTINE_NAME
                 else -> null
             }
@@ -51,11 +62,21 @@ class RpgAnnotator : Annotator {
             }
         }
 
+        // Use-site coloring.
+        // A procedure declared in this file, colored where it is *called* (the
+        // lexer only sees the declaration). Only the symbol scan knows the name.
         if (upper in RpgLocalSymbols.procedureNames(file)) {
             apply(holder, element, RpgSyntaxHighlighter.PROC_NAME)
             return
         }
-
+        // A procedure *call* whose name is declared nowhere in this file is
+        // assumed to live in a bound service program. With no local declaration
+        // to learn the name from, the call syntax is the only signal, so we key
+        // off an identifier immediately followed by '(' — a bare undeclared
+        // identifier is left alone, and so is a locally-declared non-procedure
+        // indexed with '(' (e.g. an array). It gets the service-program color,
+        // which defaults to the external-file color but is separately
+        // customizable.
         if (isCallSite(element) && upper !in RpgLocalSymbols.declaredNames(file)) {
             apply(holder, element, RpgSyntaxHighlighter.SERVICE_PROC)
         }
@@ -73,8 +94,12 @@ class RpgAnnotator : Annotator {
         nextMeaningful(element)?.node?.elementType == RpgTokenTypes.LPAREN
 
     /**
-     * Whether [element] sits inside an `EXEC SQL … ;` block, decided by scanning back to
-     * the nearest decisive token: an SQL token means inside, a `;` / `END-EXEC` means outside.
+     * Whether [element] sits inside an `EXEC SQL … ;` block. Scans backward to
+     * the nearest decisive token: any SQL token (the block opener, a keyword, a
+     * cursor keyword, or a host variable) means inside; a statement terminator
+     * (`;` or `END-EXEC`) or the start of file means outside. SQL tokens only
+     * occur inside SQL blocks, and every block ends with `;`, so the first
+     * decisive token behind the element settles the question.
      */
     private fun isInsideSql(element: PsiElement): Boolean {
         var prev = PsiTreeUtil.prevLeaf(element, true)
@@ -84,6 +109,8 @@ class RpgAnnotator : Annotator {
                 RpgTokenTypes.SEMICOLON -> return false
                 RpgTokenTypes.SQL_CURSOR_KEYWORD, RpgTokenTypes.SQL_HOST_VAR -> return true
                 RpgTokenTypes.SQL_KEYWORD ->
+                    // The block opener ("EXEC SQL") and inner keywords mean we're
+                    // inside; the "/END-EXEC" terminator means we're past a block.
                     return prev.text.trim().uppercase().removePrefix("/") != "END-EXEC"
                 else -> {}
             }

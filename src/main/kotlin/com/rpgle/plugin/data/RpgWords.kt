@@ -1,11 +1,15 @@
 package com.rpgle.plugin.data
 
 /**
- * Static RPG vocabulary, all stored UPPERCASE, shared by the annotator (coloring) and the
- * completion contributor. Embedded SQL words are catalogued separately so they color distinctly.
+ * Static RPG vocabulary, all stored UPPERCASE. RPG is case-insensitive, so
+ * callers uppercase the source token before lookup. Shared by the annotator
+ * (coloring) and the completion contributor (suggestions). Embedded SQL words
+ * are catalogued separately in [SQL_KEYWORDS] — with cursor-lifecycle words in
+ * [SQL_CURSOR_KEYWORDS] — so they color distinctly from RPG opcodes.
  */
 object RpgWords {
 
+    /** Built-in functions, stored WITH the leading '%'. */
     val BIFS: Set<String> = setOf(
         "%ABS", "%ADDR", "%ALLOC", "%BITAND", "%BITNOT", "%BITOR", "%BITXOR",
         "%CHAR", "%CHECK", "%CHECKR", "%CONCAT", "%CONCATARR", "%DATE", "%DAYS", "%DEC", "%DECH",
@@ -23,6 +27,7 @@ object RpgWords {
         "%XLATE", "%YEARS", "%DATA", "%GEN", "%PARSER"
     )
 
+    /** Operation codes (free and fixed format). */
     val OPCODES: Set<String> = setOf(
         "ACQ", "ADD", "ADDDUR", "ALLOC", "BEGSR", "BITOFF", "BITON", "CALL",
         "CALLB", "CALLP", "CAT", "CHAIN", "CHECK", "CHECKR", "CLEAR", "CLOSE",
@@ -41,19 +46,36 @@ object RpgWords {
         "FOR-EACH"
     )
 
+    /**
+     * SQL words colored inside an EXEC SQL block. Kept as its own category
+     * (distinct from [OPCODES]) so embedded SQL stands out with its own color —
+     * note several words such as SELECT/OPEN/CLOSE/COMMIT/FOR/IN/WHEN also exist
+     * as RPG opcodes, but inside an EXEC SQL block they are SQL, not opcodes.
+     *
+     * The lexer's IN_SQL state (RpgLexer.flex) is what actually classifies these
+     * at lex time; this set mirrors that vocabulary in one readable place.
+     * `RpgWordsSqlSyncTest` asserts the two stay identical so the mirror can't
+     * silently drift.
+     */
     val SQL_KEYWORDS: Set<String> = setOf(
+        // Statement keywords / clauses
         "SELECT", "ALL", "DISTINCT", "INTO", "FROM", "WHERE", "GROUP", "BY",
         "HAVING", "ORDER", "ASC", "DESC", "INSERT", "UPDATE", "DELETE", "MERGE",
         "SET", "VALUES", "FOR", "OF", "HOLD", "WITH", "WITHOUT", "AS", "ON", "USING",
+        // Joins / set operators
         "JOIN", "INNER", "LEFT", "RIGHT", "FULL", "OUTER", "CROSS", "UNION",
         "EXCEPT", "INTERSECT",
+        // Predicates / logical
         "AND", "OR", "NOT", "NULL", "IS", "IN", "EXISTS", "BETWEEN", "LIKE",
         "ESCAPE", "CASE", "WHEN", "THEN", "ELSE", "END", "CAST",
+        // Aggregates / common functions
         "COUNT", "SUM", "AVG", "MIN", "MAX", "COALESCE", "NULLIF",
+        // DDL
         "CREATE", "ALTER", "DROP", "TABLE", "VIEW", "INDEX", "ALIAS",
         "PROCEDURE", "FUNCTION", "TRIGGER", "PRIMARY", "KEY", "FOREIGN",
         "REFERENCES", "UNIQUE", "CHECK", "CONSTRAINT", "DEFAULT", "GRANT",
         "REVOKE",
+        // Transaction / dynamic SQL / cursor controls
         "COMMIT", "ROLLBACK", "SAVEPOINT", "PREPARE", "EXECUTE", "IMMEDIATE",
         "DESCRIBE", "CALL", "CONNECT", "DISCONNECT", "RELEASE", "OPTION",
         "ISOLATION", "ONLY", "ROWS", "ROW", "NEXT", "FIRST", "OFFSET",
@@ -61,22 +83,31 @@ object RpgWords {
         "DIAGNOSTICS"
     )
 
+    /**
+     * Cursor definition / lifecycle keywords. Split out of [SQL_KEYWORDS] so the
+     * lexer can color them distinctly (a slightly darker blue) within an EXEC SQL
+     * block. Mirrors the SQL_CURSOR_KW macro in RpgLexer.flex — keep both in sync
+     * (enforced by `RpgWordsSqlSyncTest`).
+     */
     val SQL_CURSOR_KEYWORDS: Set<String> = setOf(
         "DECLARE", "CURSOR", "OPEN", "FETCH", "CLOSE"
     )
 
+    /** Declaration / structure keywords (free format). */
     val DECL_KEYWORDS: Set<String> = setOf(
         "DCL-PROC", "DCL-PR", "DCL-PI", "DCL-F", "DCL-DS", "DCL-S", "DCL-C",
         "DCL-SUBF", "DCL-PARM", "DCL-ENUM", "CTL-OPT",
         "END-PROC", "END-PR", "END-PI", "END-DS", "END-ENUM"
     )
 
+    /** Data types. */
     val DATA_TYPES: Set<String> = setOf(
         "CHAR", "VARCHAR", "INT", "UNS", "PACKED", "ZONED", "BINDEC", "FLOAT",
         "IND", "DATE", "TIME", "TIMESTAMP", "POINTER", "GRAPH", "VARGRAPH",
         "UCS2", "VARUCS2", "OBJECT", "LIKE", "LIKEDS", "LIKEREC"
     )
 
+    /** Definition keyword arguments (D-spec / F-spec / control keywords). */
     val KEYWORD_ARGS: Set<String> = setOf(
         "EXTPGM", "EXTPROC", "DIM", "CONST", "VALUE", "OPTIONS", "QUALIFIED",
         "TEMPLATE", "INZ", "BASED", "EXPORT", "IMPORT", "STATIC", "DATFMT",
@@ -88,6 +119,7 @@ object RpgWords {
         "ACTGRP", "BNDDIR", "OPTION", "DECEDIT", "COPYRIGHT", "POS", "ENUM"
     )
 
+    /** Everything offered as a plain keyword completion. */
     val COMPLETION_KEYWORDS: List<String> =
         (OPCODES + DECL_KEYWORDS + DATA_TYPES + KEYWORD_ARGS).sorted()
 }

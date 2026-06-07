@@ -7,14 +7,33 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 
 /**
- * UPPERCASE symbol names declared in a single RPG file (from [RpgSymbolScanner], cached per
- * file), used by the annotator to color procedures at their call sites. `/COPY` includes are
- * not resolved, so an included procedure falls into the bound service-program case.
+ * Symbol names declared in a single RPG file, derived from [RpgSymbolScanner] and
+ * cached per file. Names are stored UPPERCASE because RPG is case-insensitive;
+ * callers uppercase the source token before lookup.
+ *
+ * Two sets, used by the annotator to color procedures at their *call* sites (the
+ * lexer/highlighter can only see a declaration):
+ *  - [procedureNames]: procedures and prototypes declared in the file. Colored
+ *    with the procedure-name attribute wherever they are called.
+ *  - [declaredNames]: every symbol declared in the file (procedures, files,
+ *    variables, constants, data structures, subroutines). Used to tell a call of
+ *    a locally-declared thing from a call of a procedure that is *not* defined
+ *    here — the latter is assumed to live in a bound service program and is
+ *    colored like an external file.
+ *
+ * Unlike its predecessor this does **not** resolve `/COPY`/`/INCLUDE` prototypes:
+ * a procedure reached through an include isn't "defined in this file", so at a
+ * call site it falls into the service-program case rather than being treated as
+ * a local procedure.
  */
 object RpgLocalSymbols {
 
     private data class Names(val procedures: Set<String>, val declared: Set<String>)
 
+    /**
+     * Stored under an explicit key (rather than the provider's auto-derived one)
+     * so [dropCache] can evict it deterministically when the editor is closed.
+     */
     private val NAMES_KEY: Key<CachedValue<Names>> = Key.create("rpg.local.symbols")
 
     /** UPPERCASE procedure / prototype names declared in [file]. */

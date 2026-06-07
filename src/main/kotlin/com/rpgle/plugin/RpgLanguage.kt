@@ -1,8 +1,7 @@
 package com.rpgle.plugin
 
-import com.intellij.lang.Language
+import com.rpgle.plugin.common.FlatLanguage
 
-object RpgLanguage : Language("RPG") {
+object RpgLanguage : FlatLanguage("RPG") {
     private fun readResolve(): Any = RpgLanguage
-    override fun isCaseSensitive(): Boolean = false
 }
