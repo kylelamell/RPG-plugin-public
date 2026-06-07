@@ -1,8 +1,8 @@
 package com.rpgle.plugin.dds
 
-import com.intellij.psi.tree.IElementType
+import com.rpgle.plugin.common.FlatTokenType
 
-class DdsTokenType(debugName: String) : IElementType(debugName, DdsLanguage)
+class DdsTokenType(debugName: String) : FlatTokenType(debugName, DdsLanguage)
 
 object DdsTokenTypes {
     @JvmField val COMMENT = DdsTokenType("COMMENT")
@@ -13,6 +13,5 @@ object DdsTokenTypes {
     @JvmField val IDENTIFIER = DdsTokenType("IDENTIFIER")
     @JvmField val LPAREN = DdsTokenType("LPAREN")
     @JvmField val RPAREN = DdsTokenType("RPAREN")
-
     @JvmField val TEXT = DdsTokenType("TEXT")
 }

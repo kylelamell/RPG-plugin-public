@@ -1,8 +1,7 @@
 package com.rpgle.plugin.dds
 
-import com.intellij.lang.Language
+import com.rpgle.plugin.common.FlatLanguage
 
-object DdsLanguage : Language("RPGDDS") {
+object DdsLanguage : FlatLanguage("RPGDDS") {
     private fun readResolve(): Any = DdsLanguage
-    override fun isCaseSensitive(): Boolean = false
 }
