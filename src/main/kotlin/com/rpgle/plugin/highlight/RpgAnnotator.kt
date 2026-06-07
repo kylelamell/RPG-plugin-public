@@ -23,6 +23,8 @@ class RpgAnnotator : Annotator {
         val upper = element.text.uppercase()
         val file = element.containingFile ?: return
 
+        if (RpgSqlPresence.hasEmbeddedSql(file) && isInsideSql(element)) return
+
         val keywordKey = when (upper) {
             in RpgWords.OPCODES -> RpgSyntaxHighlighter.OPCODE
             in RpgWords.DECL_KEYWORDS -> RpgSyntaxHighlighter.KEYWORD
@@ -49,13 +51,11 @@ class RpgAnnotator : Annotator {
             }
         }
 
-        if (isInsideSql(element)) return
-
-        val file = element.containingFile
         if (upper in RpgLocalSymbols.procedureNames(file)) {
             apply(holder, element, RpgSyntaxHighlighter.PROC_NAME)
             return
         }
+
         if (isCallSite(element) && upper !in RpgLocalSymbols.declaredNames(file)) {
             apply(holder, element, RpgSyntaxHighlighter.SERVICE_PROC)
         }

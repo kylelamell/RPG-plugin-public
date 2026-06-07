@@ -5,35 +5,37 @@ import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.HighlighterColors
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.colors.TextAttributesKey.createTextAttributesKey
-import com.intellij.openapi.fileTypes.SyntaxHighlighterBase
 import com.intellij.psi.TokenType
 import com.intellij.psi.tree.IElementType
+import com.rpgle.plugin.common.MapSyntaxHighlighter
 import com.rpgle.plugin.lexer.RpgLexerAdapter
 import com.rpgle.plugin.psi.RpgTokenTypes
 
-class RpgSyntaxHighlighter : SyntaxHighlighterBase() {
+class RpgSyntaxHighlighter : MapSyntaxHighlighter() {
 
     override fun getHighlightingLexer(): Lexer = RpgLexerAdapter()
 
-    override fun getTokenHighlights(tokenType: IElementType): Array<TextAttributesKey> =
-        when (tokenType) {
-            RpgTokenTypes.COMMENT -> COMMENT_KEYS
-            RpgTokenTypes.STRING -> STRING_KEYS
-            RpgTokenTypes.NUMBER -> NUMBER_KEYS
-            RpgTokenTypes.BIF -> BIF_KEYS
-            RpgTokenTypes.DIRECTIVE -> DIRECTIVE_KEYS
-            RpgTokenTypes.OPERATOR -> OPERATOR_KEYS
-            RpgTokenTypes.SQL_KEYWORD -> SQL_KEYWORD_KEYS
-            RpgTokenTypes.SQL_CURSOR_KEYWORD -> SQL_CURSOR_KEYWORD_KEYS
-            RpgTokenTypes.SQL_HOST_VAR -> SQL_HOST_VAR_KEYS
-            RpgTokenTypes.SEMICOLON,
-            RpgTokenTypes.COMMA,
-            RpgTokenTypes.COLON -> SEPARATOR_KEYS
-            RpgTokenTypes.LPAREN,
-            RpgTokenTypes.RPAREN -> PAREN_KEYS
-            TokenType.BAD_CHARACTER -> BAD_CHAR_KEYS
-            else -> EMPTY
-        }
+    // Lexer token → color. DOT (qualified-name separator, e.g. ds.subfield) is
+    // intentionally absent so it is left uncolored. The semantic keys below
+    // (KEYWORD/OPCODE/PROC_NAME/…) are applied by RpgAnnotator, not the lexer, so
+    // they don't appear here.
+    override val tokenKeys: Map<IElementType, TextAttributesKey> = mapOf(
+        RpgTokenTypes.COMMENT to LINE_COMMENT,
+        RpgTokenTypes.STRING to STRING,
+        RpgTokenTypes.NUMBER to NUMBER,
+        RpgTokenTypes.BIF to BIF,
+        RpgTokenTypes.DIRECTIVE to DIRECTIVE,
+        RpgTokenTypes.OPERATOR to OPERATOR,
+        RpgTokenTypes.SQL_KEYWORD to SQL_KEYWORD,
+        RpgTokenTypes.SQL_CURSOR_KEYWORD to SQL_CURSOR_KEYWORD,
+        RpgTokenTypes.SQL_HOST_VAR to SQL_HOST_VAR,
+        RpgTokenTypes.SEMICOLON to SEPARATOR,
+        RpgTokenTypes.COMMA to SEPARATOR,
+        RpgTokenTypes.COLON to SEPARATOR,
+        RpgTokenTypes.LPAREN to PARENTHESES,
+        RpgTokenTypes.RPAREN to PARENTHESES,
+        TokenType.BAD_CHARACTER to BAD_CHARACTER,
+    )
 
     companion object {
         val LINE_COMMENT = key("RPG_LINE_COMMENT", DefaultLanguageHighlighterColors.LINE_COMMENT)
@@ -49,6 +51,7 @@ class RpgSyntaxHighlighter : SyntaxHighlighterBase() {
         val PARENTHESES = key("RPG_PARENTHESES", DefaultLanguageHighlighterColors.PARENTHESES)
         val BAD_CHARACTER = key("RPG_BAD_CHARACTER", HighlighterColors.BAD_CHARACTER)
 
+        // Semantic keys applied by the annotator (lexer can't classify by word).
         val KEYWORD = key("RPG_KEYWORD", DefaultLanguageHighlighterColors.KEYWORD)
         val OPCODE = key("RPG_OPCODE", DefaultLanguageHighlighterColors.KEYWORD)
         val DATA_TYPE = key("RPG_DATA_TYPE", DefaultLanguageHighlighterColors.KEYWORD)
@@ -59,19 +62,5 @@ class RpgSyntaxHighlighter : SyntaxHighlighterBase() {
 
         private fun key(name: String, fallback: TextAttributesKey) =
             createTextAttributesKey(name, fallback)
-
-        private val COMMENT_KEYS = arrayOf(LINE_COMMENT)
-        private val STRING_KEYS = arrayOf(STRING)
-        private val NUMBER_KEYS = arrayOf(NUMBER)
-        private val BIF_KEYS = arrayOf(BIF)
-        private val DIRECTIVE_KEYS = arrayOf(DIRECTIVE)
-        private val OPERATOR_KEYS = arrayOf(OPERATOR)
-        private val SQL_KEYWORD_KEYS = arrayOf(SQL_KEYWORD)
-        private val SQL_CURSOR_KEYWORD_KEYS = arrayOf(SQL_CURSOR_KEYWORD)
-        private val SQL_HOST_VAR_KEYS = arrayOf(SQL_HOST_VAR)
-        private val SEPARATOR_KEYS = arrayOf(SEPARATOR)
-        private val PAREN_KEYS = arrayOf(PARENTHESES)
-        private val BAD_CHAR_KEYS = arrayOf(BAD_CHARACTER)
-        private val EMPTY = emptyArray<TextAttributesKey>()
     }
 }
