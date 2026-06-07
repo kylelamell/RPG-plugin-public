@@ -17,6 +17,8 @@ import com.rpgle.plugin.psi.RpgTokenTypes;
 
 %state IN_SQL
 
+%state SQL_INTRO
+
 NL            = \R
 WHITE_SPACE   = [ \t\f]+
 LINE_COMMENT  = "//" [^\r\n]*
@@ -41,7 +43,7 @@ BIF           = "%" [A-Za-z] [A-Za-z0-9]*
 IDENT         = [A-Za-z@#$] [A-Za-z0-9@#$_]*
 OPERATOR      = "<=" | ">=" | "<>" | "**" | "+=" | "-=" | "*=" | "/=" | [-+*/=<>]
 
-EXEC_SQL      = "/"? "EXEC" {WHITE_SPACE} "SQL"
+EXEC_INTRO    = "/"? "EXEC"
 END_EXEC      = "/"? "END-EXEC"
 
 SQL_KEYWORD   = "SELECT" | "ALL" | "DISTINCT" | "INTO" | "FROM" | "WHERE"
@@ -72,7 +74,7 @@ SQL_CURSOR_KW = "DECLARE" | "CURSOR" | "OPEN" | "FETCH" | "CLOSE"
   ^ [0-9 ]* "*" / {NL}                       { return RpgTokenTypes.COMMENT; }
   ^ "**" [^\r\n]*                            { return RpgTokenTypes.COMMENT; }
 
-  {EXEC_SQL}      { yybegin(IN_SQL); return RpgTokenTypes.SQL_KEYWORD; }
+  {EXEC_INTRO}    { yybegin(SQL_INTRO); return RpgTokenTypes.SQL_KEYWORD; }
 
   {WHITE_SPACE}   { return TokenType.WHITE_SPACE; }
   {NL}            { return TokenType.WHITE_SPACE; }
@@ -93,6 +95,12 @@ SQL_CURSOR_KW = "DECLARE" | "CURSOR" | "OPEN" | "FETCH" | "CLOSE"
   {OPERATOR}      { return RpgTokenTypes.OPERATOR; }
 
   [^]             { return TokenType.BAD_CHARACTER; }
+}
+
+<SQL_INTRO> {
+  {WHITE_SPACE}   { return TokenType.WHITE_SPACE; }
+  "SQL"           { yybegin(IN_SQL); return RpgTokenTypes.SQL_KEYWORD; }
+  [^]             { yypushback(1); yybegin(YYINITIAL); }
 }
 
 <IN_SQL> {
