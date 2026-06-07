@@ -4,22 +4,20 @@ import com.intellij.lexer.Lexer
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.colors.TextAttributesKey.createTextAttributesKey
-import com.intellij.openapi.fileTypes.SyntaxHighlighterBase
 import com.intellij.psi.tree.IElementType
+import com.rpgle.plugin.common.MapSyntaxHighlighter
 
-class BinderSyntaxHighlighter : SyntaxHighlighterBase() {
+class BinderSyntaxHighlighter : MapSyntaxHighlighter() {
 
     override fun getHighlightingLexer(): Lexer = BinderLexerAdapter()
 
-    override fun getTokenHighlights(tokenType: IElementType): Array<TextAttributesKey> =
-        when (tokenType) {
-            BinderTokenTypes.COMMENT -> arrayOf(COMMENT)
-            BinderTokenTypes.STRING -> arrayOf(STRING)
-            BinderTokenTypes.KEYWORD -> arrayOf(KEYWORD)
-            BinderTokenTypes.SPECIAL -> arrayOf(SPECIAL)
-            BinderTokenTypes.NUMBER -> arrayOf(NUMBER)
-            else -> EMPTY
-        }
+    override val tokenKeys: Map<IElementType, TextAttributesKey> = mapOf(
+        BinderTokenTypes.COMMENT to COMMENT,
+        BinderTokenTypes.STRING to STRING,
+        BinderTokenTypes.KEYWORD to KEYWORD,
+        BinderTokenTypes.SPECIAL to SPECIAL,
+        BinderTokenTypes.NUMBER to NUMBER,
+    )
 
     companion object {
         val COMMENT = createTextAttributesKey("RPG_BND_COMMENT", DefaultLanguageHighlighterColors.BLOCK_COMMENT)
@@ -27,6 +25,5 @@ class BinderSyntaxHighlighter : SyntaxHighlighterBase() {
         val KEYWORD = createTextAttributesKey("RPG_BND_KEYWORD", DefaultLanguageHighlighterColors.KEYWORD)
         val SPECIAL = createTextAttributesKey("RPG_BND_SPECIAL", DefaultLanguageHighlighterColors.CONSTANT)
         val NUMBER = createTextAttributesKey("RPG_BND_NUMBER", DefaultLanguageHighlighterColors.NUMBER)
-        private val EMPTY = emptyArray<TextAttributesKey>()
     }
 }

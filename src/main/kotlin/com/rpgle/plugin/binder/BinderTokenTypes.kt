@@ -1,8 +1,8 @@
 package com.rpgle.plugin.binder
 
-import com.intellij.psi.tree.IElementType
+import com.rpgle.plugin.common.FlatTokenType
 
-class BinderTokenType(debugName: String) : IElementType(debugName, BinderLanguage)
+class BinderTokenType(debugName: String) : FlatTokenType(debugName, BinderLanguage)
 
 object BinderTokenTypes {
     @JvmField val COMMENT = BinderTokenType("COMMENT")
