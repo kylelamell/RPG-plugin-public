@@ -62,8 +62,10 @@ class RpgCompletionTest : BasePlatformTestCase() {
     }
 
     /**
-     * Completion is single-file: a procedure declared only in another file (even one pulled in via
-     * `/COPY`) must never be offered, while local procedures sharing the lookup prefix are.
+     * Completion is single-file: a symbol declared only in another file (even one
+     * pulled in via `/COPY`) must never be offered here. Two local procedures share
+     * the `shared` prefix so the lookup is guaranteed to pop up with the locals;
+     * the foreign procedure must be absent from it.
      */
     fun testCompletionDoesNotLeakSymbolsFromAnotherFile() {
         myFixture.addFileToProject(

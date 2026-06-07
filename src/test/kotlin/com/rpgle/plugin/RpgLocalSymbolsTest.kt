@@ -4,8 +4,11 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.rpgle.plugin.scan.RpgLocalSymbols
 
 /**
- * Backs the annotator's use-site coloring: procedures declared in the file are colored where
- * called, while a call to a name declared nowhere is treated as a bound service-program procedure.
+ * Backs the annotator's use-site coloring. Procedures/prototypes declared in the
+ * file are colored as procedure names where they're called; an identifier that
+ * is *called* but declared nowhere in the file is assumed to be a bound
+ * service-program procedure and colored like an external file. Names are stored
+ * UPPERCASE.
  */
 class RpgLocalSymbolsTest : BasePlatformTestCase() {
 
@@ -77,6 +80,9 @@ class RpgLocalSymbolsTest : BasePlatformTestCase() {
             end-proc;
             """.trimIndent()
         )
+        // /COPY prototypes are no longer pulled into the local symbol set: a call
+        // to getCustomer here is treated as a bound service-program procedure
+        // (colored like an external file), not a locally-declared procedure.
         val procs = RpgLocalSymbols.procedureNames(file)
         val declared = RpgLocalSymbols.declaredNames(file)
         assertFalse("GETCUSTOMER comes from /COPY, not this file; got $procs", "GETCUSTOMER" in procs)

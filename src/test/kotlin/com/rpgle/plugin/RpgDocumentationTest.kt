@@ -6,8 +6,9 @@ import com.rpgle.plugin.scan.RpgSymbol
 import com.rpgle.plugin.scan.RpgSymbolScanner
 
 /**
- * Covers the symbol detail recovered for hover documentation and the end-to-end documentation
- * provider. Resolution is confined to the current file.
+ * Covers the symbol detail recovered for hover documentation (variable type,
+ * constant value, procedure parameters + return type) and the end-to-end
+ * documentation provider. Resolution is confined to the current file.
  */
 class RpgDocumentationTest : BasePlatformTestCase() {
 
@@ -102,6 +103,8 @@ class RpgDocumentationTest : BasePlatformTestCase() {
     }
 
     fun testBodylessPrototypeHasNoParams() {
+        // A parameterless prototype can be a single statement with no END-PR; the
+        // executable code that follows must not be mistaken for its parameters.
         myFixture.configureByText(
             "a.rpgle",
             """
@@ -132,8 +135,10 @@ class RpgDocumentationTest : BasePlatformTestCase() {
     }
 
     /**
-     * Documentation is single-file: hovering an identifier declared only in another file (even one
-     * reachable via `/COPY`) must resolve to nothing.
+     * Documentation is single-file: hovering an identifier that is declared only in
+     * another file (here `amountFromOther`, written but never declared in a.rpgle)
+     * must resolve to nothing — no hover popup — even with the declaring file open
+     * in the same project and reachable via `/COPY`.
      */
     fun testDocumentationDoesNotResolveSymbolFromAnotherFile() {
         myFixture.addFileToProject(
