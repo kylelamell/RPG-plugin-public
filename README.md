@@ -2,7 +2,7 @@
 
 Language support for IBM i RPG / ILE RPG in IntelliJ-based IDEs. Mostly here for the syntax highlighting.
 
-> First vibe-coded project, so be nice :)
+> Vibe-coded from scratch
 
 ## Features
 
